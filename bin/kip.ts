@@ -73,6 +73,10 @@ const commands: Record<string, Command> = {
       }
     }
   },
+  update: {
+    desc: 'Update Kip CLI and project files',
+    run: update
+  },
   help: {
     desc: 'Show help',
     run: showHelp
@@ -83,10 +87,12 @@ async function initProject(): Promise<void> {
   const targetDir = cwd
   const projectName = path.basename(targetDir)
 
-  // Check if directory is empty or only has .git
-  const files = fs.readdirSync(targetDir).filter(f => f !== '.git')
+  // Check if directory is empty or only has git-related files
+  const allowedFiles = ['.git', '.github', '.gitignore', '.DS_Store']
+  const files = fs.readdirSync(targetDir).filter(f => !allowedFiles.includes(f))
   if (files.length > 0) {
     console.log('\n❌ Directory is not empty')
+    console.log('Found:', files.join(', '))
     console.log('Run kip init in an empty directory, or use kip create <name>\n')
     return
   }
@@ -100,10 +106,15 @@ async function initProject(): Promise<void> {
       stdio: 'inherit'
     })
 
-    // Move files from temp to current dir
+    // Move files from temp to current dir (preserve user's existing git files)
     const tempFiles = fs.readdirSync(tempDir)
+    const preserveFiles = ['.git', '.github', '.gitignore']
     for (const file of tempFiles) {
       if (file === '.git') continue
+      // Skip if user already has this file and it's in preserve list
+      if (preserveFiles.includes(file) && fs.existsSync(path.join(targetDir, file))) {
+        continue
+      }
       fs.renameSync(path.join(tempDir, file), path.join(targetDir, file))
     }
 
@@ -119,17 +130,7 @@ async function initProject(): Promise<void> {
     delete pkg.homepage
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
 
-    // Update _config.yml
-    const configPath = path.join(targetDir, '_config.yml')
-    let config = fs.readFileSync(configPath, 'utf-8')
-    config = config.replace(/root: \/blog\//, `root: /${projectName}/`)
-    fs.writeFileSync(configPath, config)
-
-    // Update vite.config.ts
-    const vitePath = path.join(targetDir, 'vite.config.ts')
-    let viteConfig = fs.readFileSync(vitePath, 'utf-8')
-    viteConfig = viteConfig.replace(/base: '\/blog\/'/, `base: '/${projectName}/'`)
-    fs.writeFileSync(vitePath, viteConfig)
+    // Default root is '/', user can customize in _config.yml and vite.config.ts if needed
 
     // Initialize git repo
     const hasGit = fs.existsSync(path.join(targetDir, '.git'))
@@ -193,17 +194,7 @@ async function createProject(): Promise<void> {
     delete pkg.homepage
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
 
-    // Update _config.yml
-    const configPath = path.join(targetDir, '_config.yml')
-    let config = fs.readFileSync(configPath, 'utf-8')
-    config = config.replace(/root: \/blog\//, `root: /${projectName}/`)
-    fs.writeFileSync(configPath, config)
-
-    // Update vite.config.ts
-    const vitePath = path.join(targetDir, 'vite.config.ts')
-    let viteConfig = fs.readFileSync(vitePath, 'utf-8')
-    viteConfig = viteConfig.replace(/base: '\/blog\/'/, `base: '/${projectName}/'`)
-    fs.writeFileSync(vitePath, viteConfig)
+    // Default root is '/', user can customize in _config.yml and vite.config.ts if needed
 
     // Initialize git repo
     console.log('Initializing git repository...')
@@ -358,6 +349,82 @@ Write about your project here...
   }
 }
 
+async function update(): Promise<void> {
+  console.log('\n🔄 Updating Kip...\n')
+
+  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+
+  // Update global CLI
+  console.log('Updating global Kip CLI...')
+  try {
+    execSync(`${npm} update -g @kk0x03/kip`, { stdio: 'inherit' })
+    console.log('✅ Global CLI updated\n')
+  } catch {
+    console.log('⚠️  Could not update global CLI (may not be installed globally)\n')
+  }
+
+  // Update local project if in a kip project
+  if (isInProject) {
+    console.log('Updating local project files...\n')
+
+    const tempDir = path.join(cwd, '.kip-update-temp')
+
+    try {
+      // Clone latest version
+      execSync(`git clone --depth 1 https://github.com/kk0x03/kip.git "${tempDir}"`, {
+        stdio: 'pipe'
+      })
+
+      // Files to update (core framework files, not user content)
+      const filesToUpdate = [
+        'src/components',
+        'src/styles',
+        'src/types',
+        'src/App.tsx',
+        'src/main.tsx',
+        'scripts/build-content.ts',
+        '.github/workflows'
+      ]
+
+      for (const file of filesToUpdate) {
+        const srcPath = path.join(tempDir, file)
+        const destPath = path.join(cwd, file)
+
+        if (fs.existsSync(srcPath)) {
+          // Remove old file/directory
+          if (fs.existsSync(destPath)) {
+            fs.rmSync(destPath, { recursive: true, force: true })
+          }
+
+          // Copy new file/directory
+          if (fs.statSync(srcPath).isDirectory()) {
+            fs.cpSync(srcPath, destPath, { recursive: true })
+          } else {
+            fs.copyFileSync(srcPath, destPath)
+          }
+          console.log(`  Updated: ${file}`)
+        }
+      }
+
+      // Clean up
+      fs.rmSync(tempDir, { recursive: true, force: true })
+
+      console.log('\n✅ Local project updated!\n')
+      console.log('Your content files (projects/, _config.yml) were preserved.')
+      console.log('Run "npm install" if there are dependency changes.\n')
+    } catch (error) {
+      // Clean up on error
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true })
+      }
+      console.log('❌ Failed to update local project\n')
+      console.log('Make sure you have internet connection.\n')
+    }
+  } else {
+    console.log('Not in a Kip project - only global CLI was updated.\n')
+  }
+}
+
 function showHelp(): void {
   console.log(`
   ╔═══════════════════════════════════════╗
@@ -374,6 +441,7 @@ function showHelp(): void {
     preview        Preview production build
     deploy         Build and push to GitHub
     new [project]  Create new project entry (interactive)
+    update         Update Kip CLI and local project files
     help           Show this help
 
   Examples:
@@ -383,6 +451,7 @@ function showHelp(): void {
     kip build
     kip deploy
     kip new project
+    kip update
 `)
 }
 

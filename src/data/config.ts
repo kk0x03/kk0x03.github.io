@@ -12,7 +12,7 @@ export const siteConfig: SiteConfig = {
     "email": "hello@example.com"
   },
   "title": "My Portfolio",
-  "root": "/blog/",
+  "root": "/",
   "theme": "dark",
   "layout": {
     "style": "list",

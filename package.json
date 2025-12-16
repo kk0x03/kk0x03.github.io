@@ -1,6 +1,6 @@
 {
   "name": "kk0x03.github.io",
-  "version": "1.0.4",
+  "version": "1.0.8",
   "description": "A simple, minimal blog framework for showcasing your projects",
   "type": "module",
   "bin": {
