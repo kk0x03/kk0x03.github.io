@@ -1,0 +1,33 @@
+# Site Configuration
+
+# Your Info
+name: Your Name
+bio: Developer, designer, creator. Building things for the web.
+avatar: images/avatar.svg
+
+# Social Links
+social:
+  github: https://github.com/yourusername
+  twitter: https://twitter.com/yourusername
+  email: hello@example.com
+
+# Site
+title: My Portfolio
+root: /kk0x03.github.io/
+
+# Theme: dark | light | ocean | forest | sunset
+theme: dark
+
+# Layout Options
+layout:
+  # Project list style: list | grid | cards
+  style: list
+  # Avatar shape: circle | square
+  avatar: circle
+  # Card style: bordered | shadow | flat
+  card: bordered
+
+# Notion Integration (optional)
+# Get your API key: https://www.notion.so/my-integrations
+notion:
+  api_key: YOUR_NOTION_API_KEY
