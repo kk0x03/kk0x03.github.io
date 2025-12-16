@@ -1,0 +1,70 @@
+.about-page {
+  width: 100%;
+}
+
+.about-content {
+  max-width: 700px;
+}
+
+.about-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  background: var(--tag-bg);
+  border: 4px solid var(--border-color);
+}
+
+.about-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-section {
+  margin-bottom: 2.5rem;
+}
+
+.about-section h2 {
+  font-size: 1.4rem;
+  margin: 0 0 1rem 0;
+  color: var(--primary-color);
+}
+
+.about-section p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin: 0 0 1rem 0;
+}
+
+.about-section ul {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.about-section li {
+  margin-bottom: 0.5rem;
+}
+
+.contact-links {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.contact-links a {
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  background: var(--tag-bg);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.contact-links a:hover {
+  background: var(--primary-color);
+  color: white;
+}
